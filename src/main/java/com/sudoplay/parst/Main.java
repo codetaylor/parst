@@ -4,6 +4,8 @@ import com.google.gson.GsonBuilder;
 import com.sudoplay.parst.data.ConfigurationData;
 import com.sudoplay.parst.data.FileData;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.nio.file.Files;
@@ -29,6 +31,8 @@ public class Main {
     ConfigurationDataLoader configurationDataLoader = new ConfigurationDataLoader(
         new GsonBuilder().setPrettyPrinting().create()
     );
+
+    ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
 
     DataParser dataParser = new DataParser();
     HeaderWriter headerWriter = new HeaderWriter();
@@ -58,7 +62,14 @@ public class Main {
           BufferedWriter writer = Files.newBufferedWriter(target);
           headerWriter.write(fileData.header, writer);
           importWriter.write(data.importMap, parsedData.getImportSet(), writer);
-          dataWriter.write(parsedData.getNameList(), parsedData.getImportList(), parsedData.getRecordList(), writer);
+          dataWriter.write(
+              parsedData.getNameList(),
+              parsedData.getMetaDataList(),
+              parsedData.getRecordList(),
+              data.processorMap,
+              writer,
+              engine
+          );
           writer.close();
         }
 

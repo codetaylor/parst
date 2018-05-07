@@ -14,6 +14,9 @@ public class ConfigurationData {
 
   public String targetFolder = "";
 
+  @SerializedName("processors")
+  public Map<String, Map<String, String>> processorMap;
+
   @SerializedName("files")
   public List<FileData> fileDataList;
 
