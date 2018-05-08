@@ -38,12 +38,16 @@ public class Main {
 
     for (String configFileLocation : configFileLocations) {
 
+      logger.info("Parsing config: " + configFileLocation);
+
       try {
         ConfigurationData data = configurationDataLoader.load(configFileLocation);
 
         for (FileData fileData : data.fileDataList) {
           Path source = Paths.get(data.sourceFolder, fileData.source);
           Path target = Paths.get(data.targetFolder, fileData.target);
+
+          logger.info("Parsing file: " + source + " >> " + target);
 
           if (!Files.exists(source)) {
             logger.warn("Missing file: " + source);

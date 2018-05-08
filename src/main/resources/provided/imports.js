@@ -10,7 +10,18 @@ var imports = {
     IItemStack: 'crafttweaker.item.IItemStack',
     IItemDefinition: 'crafttweaker.item.IItemDefinition',
     ILiquidStack: 'crafttweaker.liquid.ILiquidStack'
-}
+};
+
+var ignore = [
+    'bool',
+    'byte',
+    'short',
+    'int',
+    'long',
+    'float',
+    'double',
+    'string'
+];
 
 var importSet = new HashSet();
 
@@ -24,7 +35,7 @@ for each(var meta in metaList) {
 
 for each(var i in importSet) {
 
-    if (!imports[i]) {
+    if (!imports[i] && ignore.indexOf(i) == -1) {
         logger.warn('Missing import transform entry for: ' + i);
         continue;
     }
