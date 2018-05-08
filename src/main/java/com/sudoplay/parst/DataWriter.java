@@ -1,15 +1,19 @@
 package com.sudoplay.parst;
 
+import com.google.gson.Gson;
+import com.sudoplay.parst.data.ColumnProcessorData;
 import org.apache.commons.csv.CSVRecord;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.Collections;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,76 +21,118 @@ public class DataWriter {
 
   public void write(
       List<String> nameList,
-      List<Map<String, String>> parsedMetaDataList,
+      List<String> metaDataList,
       List<CSVRecord> recordList,
-      Map<String, Map<String, String>> processorMap,
+      String processorFolder,
+      Map<String, LinkedHashMap<String, String>> processorMap,
       BufferedWriter writer,
-      ScriptEngine engine
-  ) throws IOException {
+      ScriptEngine engine,
+      Gson gson,
+      ILogger logger
+  ) throws Exception {
 
     Bindings bindings = engine.createBindings();
+    bindings.put("logger", logger);
     bindings.put("nameList", nameList);
-    bindings.put("metaList", parsedMetaDataList);
+    bindings.put("metaList", metaDataList);
     bindings.put("recordList", recordList);
     bindings.put("writer", writer);
 
-    this.fireProcessors(Collections.emptyMap(), processorMap.get("preFile"), engine, bindings);
+    this.fireProcessors(processorFolder, processorMap.get("preFile"), engine, bindings);
 
     for (int i = 1; i < nameList.size(); i++) {
 
-      String prefixName = nameList.get(0);
-      String prefix = "";
+      String meta = metaDataList.get(i);
+      ColumnProcessorData columnProcessorData = gson.fromJson(meta, ColumnProcessorData.class);
 
-      if (prefixName != null && prefixName.length() > 0) {
-        prefix = prefixName.toUpperCase() + "_";
-      }
-
-      String collectionName = prefix + nameList.get(i).toUpperCase();
+      Map<String, LinkedHashMap<String, String>> columnProcessorMap = Util.copyProcessorMap(processorMap);
+      Util.overrideProcessorMap(columnProcessorMap, columnProcessorData.processorMap);
 
       bindings.put("columnIndex", i);
       bindings.put("name", nameList.get(i));
-      bindings.put("collectionName", collectionName);
-      bindings.put("meta", parsedMetaDataList.get(i));
+      bindings.put("meta", meta);
 
-      this.fireProcessors(parsedMetaDataList.get(i), processorMap.get("preCollection"), engine, bindings);
-      this.fireProcessors(parsedMetaDataList.get(i), processorMap.get("collection"), engine, bindings);
-      this.fireProcessors(parsedMetaDataList.get(i), processorMap.get("postCollection"), engine, bindings);
+      this.fireProcessors(processorFolder, columnProcessorMap.get("preCollection"), engine, bindings);
+      this.fireProcessors(processorFolder, columnProcessorMap.get("collection"), engine, bindings);
+      this.fireProcessors(processorFolder, columnProcessorMap.get("postCollection"), engine, bindings);
     }
 
     bindings.remove("columnIndex");
     bindings.remove("name");
-    bindings.remove("collectionName");
     bindings.remove("meta");
 
-    this.fireProcessors(Collections.emptyMap(), processorMap.get("postFile"), engine, bindings);
+    this.fireProcessors(processorFolder, processorMap.get("postFile"), engine, bindings);
   }
 
   private void fireProcessors(
-      Map<String, String> metaMap,
+      String processorFolder,
       Map<String, String> processorMap,
       ScriptEngine engine,
       Bindings bindings
-  ) throws FileNotFoundException {
+  ) throws IOException {
 
     if (processorMap == null) {
       return;
     }
 
-    for (Map.Entry<String, String> entry : processorMap.entrySet()) {
+    for (String processor : processorMap.values()) {
 
-      String key = entry.getKey();
+      if (processor == null) {
+        continue;
+      }
 
-      if (metaMap.containsKey(key) || "all".equals(key)) {
-        String processor = entry.getValue();
+      Path path = this.getProcessorPath(processorFolder, processor);
 
-        try {
-          engine.eval(new FileReader(processor), bindings);
+      BufferedReader reader = null;
 
-        } catch (ScriptException e) {
-          e.printStackTrace();
+      try {
+        reader = Files.newBufferedReader(path);
+        engine.eval(reader, bindings);
+
+      } catch (Throwable t) {
+        t.printStackTrace();
+
+      } finally {
+
+        if (reader != null) {
+          reader.close();
         }
       }
     }
+  }
+
+  private Path getProcessorPath(String processorFolder, String processor) {
+
+    Path path = null;
+
+    try {
+      String name = Paths.get(processor).toString();
+
+      name = name.replaceAll("\\\\", "/");
+
+      if (!name.startsWith("/")) {
+        name = "/" + name;
+      }
+
+      URL resource = this.getClass().getResource(name);
+
+      if (resource != null) {
+        path = Paths.get(resource.toURI());
+
+        if (!Files.exists(path)) {
+          path = null;
+        }
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (path == null) {
+      path = Paths.get(processorFolder, processor);
+    }
+
+    return path;
   }
 
 }

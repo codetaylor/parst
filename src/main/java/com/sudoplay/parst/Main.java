@@ -1,5 +1,6 @@
 package com.sudoplay.parst;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.sudoplay.parst.data.ConfigurationData;
 import com.sudoplay.parst.data.FileData;
@@ -11,9 +12,7 @@ import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class Main {
 
@@ -28,15 +27,13 @@ public class Main {
       configFileLocations.addAll(Arrays.asList(args));
     }
 
-    ConfigurationDataLoader configurationDataLoader = new ConfigurationDataLoader(
-        new GsonBuilder().setPrettyPrinting().create()
-    );
+    ILogger logger = new ConsoleLogger();
 
-    ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    ConfigurationDataLoader configurationDataLoader = new ConfigurationDataLoader(gson);
 
     DataParser dataParser = new DataParser();
     HeaderWriter headerWriter = new HeaderWriter();
-    ImportWriter importWriter = new ImportWriter();
     DataWriter dataWriter = new DataWriter();
 
     for (String configFileLocation : configFileLocations) {
@@ -49,7 +46,7 @@ public class Main {
           Path target = Paths.get(data.targetFolder, fileData.target);
 
           if (!Files.exists(source)) {
-            System.out.println("Missing file: " + source);
+            logger.warn("Missing file: " + source);
             continue;
           }
 
@@ -59,22 +56,32 @@ public class Main {
           ParsedData parsedData = dataParser.parse(reader);
           reader.close();
 
+          Map<String, LinkedHashMap<String, String>> processorMap = Util.copyProcessorMap(data.processorMap);
+
+          if (fileData.processorMap != null) {
+            Util.overrideProcessorMap(processorMap, fileData.processorMap);
+          }
+
+          ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+
           BufferedWriter writer = Files.newBufferedWriter(target);
           headerWriter.write(fileData.header, writer);
-          importWriter.write(data.importMap, parsedData.getImportSet(), writer);
           dataWriter.write(
               parsedData.getNameList(),
               parsedData.getMetaDataList(),
               parsedData.getRecordList(),
-              data.processorMap,
+              data.processorFolder,
+              processorMap,
               writer,
-              engine
+              engine,
+              gson,
+              logger
           );
           writer.close();
         }
 
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error("Error processing config file: " + configFileLocation, e);
       }
     }
 
