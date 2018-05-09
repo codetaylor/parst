@@ -6,9 +6,13 @@ if (!parsedMeta.type) {
     return;
 }
 
+if (!isCollectionArray && columnIndex == 0) {
+    return;
+}
+
 writer.write(newline);
 
-if (parsedMeta.collection && parsedMeta.collection == 'array') {
+if (isCollectionArray) {
 
     writer.write("global "
       + collectionName + " as "

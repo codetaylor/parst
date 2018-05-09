@@ -35,7 +35,7 @@ for each(var meta in metaList) {
 
 for each(var i in importSet) {
 
-    if (!imports[i] && ignore.indexOf(i) == -1) {
+    if (!imports[i] && !Util.contains(ignore, i)) {
         logger.warn('Missing import transform entry for: ' + i);
         continue;
     }

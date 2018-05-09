@@ -44,7 +44,7 @@ public class DataWriter {
 
     this.fireProcessors("preFile", processorFolder, processorMap, engine, bindings);
 
-    for (int i = 1; i < nameList.size(); i++) {
+    for (int i = 0; i < nameList.size(); i++) {
 
       if (Main.USE_ASCII) {
         this.logger.info(String.format("├─▓ [%d : %s]", i, nameList.get(i)));

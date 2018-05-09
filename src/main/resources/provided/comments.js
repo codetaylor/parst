@@ -6,9 +6,11 @@ if (!parsedMeta.type) {
     return;
 }
 
+if (!isCollectionArray && columnIndex == 0) {
+    return;
+}
+
 writer.write(newline);
-writer.write("// -----------------------------------------------------------------------------" + newline);
-writer.write("// - " + collectionName + newline);
-writer.write("// -----------------------------------------------------------------------------" + newline);
+Util.writeCommentSeparator(writer, collectionName);
 
 }());
