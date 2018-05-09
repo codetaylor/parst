@@ -37,7 +37,14 @@ public class CSVConverter {
       if (Files.exists(sourcePath)) {
 
         try {
-          this.logger.info(String.format("█ [%s]", fileData.source));
+
+          if (Main.USE_ASCII) {
+            this.logger.info(String.format("█ [%s]", fileData.source));
+
+          } else {
+            this.logger.info(String.format("F [%s]", fileData.source));
+          }
+
           this.convertToCSV(sourcePath, targetPath, fileData.target, dataFormatter);
 
         } catch (InvalidFormatException e) {
@@ -65,14 +72,20 @@ public class CSVConverter {
       List<List<String>> rowStrings = new ArrayList<>();
       boolean isLast = (sheetIndex == sheets.getNumberOfSheets() - 1);
 
-      if (isLast) {
-        this.logger.info(String.format("└─▓ [%d : %s]", sheetIndex, sheetName));
+      if (Main.USE_ASCII) {
+
+        if (isLast) {
+          this.logger.info(String.format("└─▓ [%d : %s]", sheetIndex, sheetName));
+
+        } else {
+          this.logger.info(String.format("├─▓ [%d : %s]", sheetIndex, sheetName));
+        }
 
       } else {
-        this.logger.info(String.format("├─▓ [%d : %s]", sheetIndex, sheetName));
+        this.logger.info(String.format("+-S [%d : %s]", sheetIndex, sheetName));
       }
 
-      for (int rowIndex = 0; rowIndex < sheet.getPhysicalNumberOfRows(); rowIndex++) {
+      for (int rowIndex = 0; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
         Row row = sheet.getRow(rowIndex);
         List<String> colStrings = this.rowToCSV(row, dataFormatter, formulaEvaluator);
         rowStrings.add(colStrings);
@@ -138,13 +151,27 @@ public class CSVConverter {
         }
       }
 
-      if (isLast) {
-        this.logger.info(String.format("  ├─> [%d] lines", rowStrings.size()));
-        this.logger.info(String.format("  └─> [%s]", path.toString()));
+      if (Main.USE_ASCII) {
+
+        if (isLast) {
+          this.logger.info(String.format("  ├─> [%d] lines", rowStrings.size()));
+          this.logger.info(String.format("  └─> [%s]", path.toString()));
+
+        } else {
+          this.logger.info(String.format("│ ├─> [%d] lines", rowStrings.size()));
+          this.logger.info(String.format("│ └─> [%s]", path.toString()));
+        }
 
       } else {
-        this.logger.info(String.format("│ ├─> [%d] lines", rowStrings.size()));
-        this.logger.info(String.format("│ └─> [%s]", path.toString()));
+
+        if (isLast) {
+          this.logger.info(String.format("  +-> [%d] lines", rowStrings.size()));
+          this.logger.info(String.format("  +-> [%s]", path.toString()));
+
+        } else {
+          this.logger.info(String.format("| +-> [%d] lines", rowStrings.size()));
+          this.logger.info(String.format("| +-> [%s]", path.toString()));
+        }
       }
 
     } finally {

@@ -48,7 +48,13 @@ public class DataWriter {
     this.fireProcessors("preFile", processorFolder, processorMap, engine, bindings);
 
     for (int i = 1; i < nameList.size(); i++) {
-      this.logger.info(String.format("├─▓ [%d : %s]", i, nameList.get(i)));
+
+      if (Main.USE_ASCII) {
+        this.logger.info(String.format("├─▓ [%d : %s]", i, nameList.get(i)));
+
+      } else {
+        this.logger.info(String.format("+-C [%d : %s]", i, nameList.get(i)));
+      }
 
       String meta = metaDataList.get(i);
       ColumnProcessorData columnProcessorData = gson.fromJson(meta, ColumnProcessorData.class);
@@ -86,14 +92,26 @@ public class DataWriter {
     String indentString = "";
 
     if (indent) {
-      indentString = "│ ";
+
+      if (Main.USE_ASCII) {
+        indentString = "│ ";
+
+      } else {
+        indentString = "| ";
+      }
     }
 
-    if (isFinal) {
-      this.logger.info(String.format("%s└─▒ [%s]", indentString, phase));
+    if (Main.USE_ASCII) {
+
+      if (isFinal) {
+        this.logger.info(String.format("%s└─▒ [%s]", indentString, phase));
+
+      } else {
+        this.logger.info(String.format("%s├─▒ [%s]", indentString, phase));
+      }
 
     } else {
-      this.logger.info(String.format("%s├─▒ [%s]", indentString, phase));
+      this.logger.info(String.format("%s+-P [%s]", indentString, phase));
     }
 
     this.fireProcessors(processorFolder, processorMap.get(phase), engine, bindings, isFinal, indent);
@@ -137,25 +155,43 @@ public class DataWriter {
         String indentString = "";
 
         if (indent) {
-          indentString = "│ ";
-        }
 
-        if (isFinal) {
-
-          if (isLast) {
-            this.logger.info(String.format("%s  └─> [%s] [%dms]", indentString, processor, duration));
+          if (Main.USE_ASCII) {
+            indentString = "│ ";
 
           } else {
-            this.logger.info(String.format("%s  ├─> [%s] [%dms]", indentString, processor, duration));
+            indentString = "| ";
+          }
+        }
+
+        if (Main.USE_ASCII) {
+
+          if (isFinal) {
+
+            if (isLast) {
+              this.logger.info(String.format("%s  └─> [%s] [%dms]", indentString, processor, duration));
+
+            } else {
+              this.logger.info(String.format("%s  ├─> [%s] [%dms]", indentString, processor, duration));
+            }
+
+          } else {
+
+            if (isLast) {
+              this.logger.info(String.format("%s│ └─> [%s] [%dms]", indentString, processor, duration));
+
+            } else {
+              this.logger.info(String.format("%s│ ├─> [%s] [%dms]", indentString, processor, duration));
+            }
           }
 
         } else {
 
-          if (isLast) {
-            this.logger.info(String.format("%s│ └─> [%s] [%dms]", indentString, processor, duration));
+          if (isFinal) {
+            this.logger.info(String.format("%s  +-> [%s] [%dms]", indentString, processor, duration));
 
           } else {
-            this.logger.info(String.format("%s│ ├─> [%s] [%dms]", indentString, processor, duration));
+            this.logger.info(String.format("%s| +-> [%s] [%dms]", indentString, processor, duration));
           }
         }
 

@@ -16,6 +16,8 @@ import java.util.*;
 
 public class Main {
 
+  public static final boolean USE_ASCII = false;
+
   public static void main(String[] args) {
 
     Main app = new Main();
@@ -64,7 +66,13 @@ public class Main {
           Path target = Paths.get(data.transform.targetFolder, fileData.target);
 
           logger.info("");
-          logger.info(String.format("█ [%s] >> [%s]", source, target));
+
+          if (Main.USE_ASCII) {
+            logger.info(String.format("█ [%s] >> [%s]", source, target));
+
+          } else {
+            logger.info(String.format("F [%s] >> [%s]", source, target));
+          }
 
           if (!Files.exists(source)) {
             logger.warn(String.format("Missing file: [%s]", source));
