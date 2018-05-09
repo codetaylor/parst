@@ -10,6 +10,12 @@ if (!isCollectionArray && columnIndex == 0) {
     return;
 }
 
+var typesToQuote = [
+    "string"
+];
+
+var requiresQuotes = Util.contains(typesToQuote, parsedMeta.type);
+
 writer.write(newline);
 
 if (isCollectionArray) {
@@ -21,7 +27,13 @@ if (isCollectionArray) {
 
     for (var j = 0; j < recordList.size(); j++) {
         var record = recordList.get(j);
-        writer.write("  " + record.get(columnIndex));
+        var element = record.get(columnIndex);
+
+        if (requiresQuotes) {
+            element = Util.quote(element);
+        }
+
+        writer.write("  " + element);
 
         if (j < recordList.size() - 1) {
           writer.write(",");
@@ -36,13 +48,19 @@ if (isCollectionArray) {
     writer.write("global "
       + collectionName + " as "
       + parsedMeta.type + "["
-      + JSON.parse(metaList.get(0)).type + "] = {");
+      + parsedMetaList[0].type + "] = {");
     writer.write(newline);
 
     for (var j = 0; j < recordList.size(); j++) {
 
         var record = recordList.get(j);
-        writer.write("  " + record.get(0) + ": " + record.get(columnIndex));
+        var element = record.get(columnIndex);
+
+        if (requiresQuotes) {
+            element = Util.quote(element);
+        }
+
+        writer.write("  " + record.get(0) + ": " + element);
 
         if (j < recordList.size() - 1) {
           writer.write(",");

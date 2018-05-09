@@ -16,6 +16,10 @@ Util.writeCommentSeparator = function(writer, text) {
     writer.write("// -----------------------------------------------------------------------------" + newline);
 };
 
+Util.quote = function(text) {
+    return "\"" + text + "\"";
+};
+
 Util.contains = function(arr, element) {
     return arr.indexOf(element) > -1;
 };
