@@ -20,6 +20,6 @@ if (parsedMeta.collection && parsedMeta.collection == 'array') {
 writer.write("  if (item as bool & !(" + oreDictEntry + " has item)) {" + newline);
 writer.write("    " + oreDictEntry + ".add(item);" + newline);
 writer.write("  }" + newline);
-writer.write("};" + newline);
+writer.write("}" + newline);
 
 }());
