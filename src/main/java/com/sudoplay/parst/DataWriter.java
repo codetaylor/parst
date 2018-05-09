@@ -6,10 +6,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.net.URL;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -142,13 +139,13 @@ public class DataWriter {
         continue;
       }
 
-      Path path = this.getProcessorPath(processorFolder, processor);
+      InputStream processorInputStream = this.getProcessorInputStream(processorFolder, processor);
 
-      BufferedReader reader = null;
+      Reader reader = null;
 
       try {
         long start = System.currentTimeMillis();
-        reader = Files.newBufferedReader(path);
+        reader = new InputStreamReader(processorInputStream);
         engine.eval(reader, bindings);
         long duration = System.currentTimeMillis() - start;
 
@@ -207,38 +204,29 @@ public class DataWriter {
     }
   }
 
-  private Path getProcessorPath(String processorFolder, String processor) {
+  private InputStream getProcessorInputStream(String processorFolder, String processor) throws IOException {
 
-    Path path = null;
+    String name = Paths.get(processor).toString();
 
-    try {
-      String name = Paths.get(processor).toString();
+    name = name.replaceAll("\\\\", "/");
 
-      name = name.replaceAll("\\\\", "/");
-
-      if (!name.startsWith("/")) {
-        name = "/" + name;
-      }
-
-      URL resource = this.getClass().getResource(name);
-
-      if (resource != null) {
-        path = Paths.get(resource.toURI());
-
-        if (!Files.exists(path)) {
-          path = null;
-        }
-      }
-
-    } catch (Exception e) {
-      e.printStackTrace();
+    if (!name.startsWith("/")) {
+      name = "/" + name;
     }
 
-    if (path == null) {
-      path = Paths.get(processorFolder, processor);
+    InputStream inputStream = this.getClass().getResourceAsStream(name);
+
+    if (inputStream != null) {
+      return inputStream;
     }
 
-    return path;
+    Path path = Paths.get(processorFolder, processor);
+
+    if (Files.exists(path) && !Files.isDirectory(path)) {
+      return Files.newInputStream(path);
+    }
+
+    throw new IOException("Unable to get processor as input stream: " + path);
   }
 
 }
