@@ -40,7 +40,9 @@ for each(var i in importSet) {
         continue;
     }
 
-    writer.write('import ' + imports[i] + ';' + System.lineSeparator());
+    if (imports[i]) {
+        writer.write('import ' + imports[i] + ';' + System.lineSeparator());
+    }
 }
 
 }());

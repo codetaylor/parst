@@ -14,6 +14,8 @@ public class ConfigurationData {
 
   public String processorFolder = "";
 
+  public ExtractData extract;
+
   @SerializedName("processors")
   public Map<String, LinkedHashMap<String, String>> processorMap;
 
