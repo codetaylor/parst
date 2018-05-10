@@ -24,8 +24,29 @@ Util.contains = function(arr, element) {
     return arr.indexOf(element) > -1;
 };
 
+Util.isCollectionKey = function(columnIndex) {
+    return parsedMetaList[columnIndex].collection && parsedMetaList[columnIndex].collection == 'key';
+};
+
 Util.isCollectionArray = function(columnIndex) {
     return parsedMetaList[columnIndex].collection && parsedMetaList[columnIndex].collection == 'array';
+};
+
+Util.isCollectionMap = function(columnIndex) {
+    return !this.isCollectionKey(columnIndex) && !this.isCollectionArray(columnIndex);
+};
+
+Util.getCollectionKeyIndex = function(columnIndex) {
+
+    if (this.isCollectionArray(columnIndex)) {
+        return -1;
+    }
+
+    if ("key" in parsedMetaList[columnIndex]) {
+        return parsedMetaList[columnIndex].key;
+    }
+
+    return 0;
 };
 
 Util.getCollectionType = function(columnIndex) {

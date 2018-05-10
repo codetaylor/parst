@@ -2,11 +2,7 @@
 
 (function() {
 
-if (!parsedMeta.type) {
-    return;
-}
-
-if (!isCollectionArray && columnIndex == 0) {
+if (!parsedMeta.type || isCollectionKey) {
     return;
 }
 
@@ -45,10 +41,12 @@ if (isCollectionArray) {
 
 } else {
 
+    var collectionKeyIndex = Util.getCollectionKeyIndex(columnIndex);
+
     writer.write("global "
       + collectionName + " as "
       + parsedMeta.type + "["
-      + parsedMetaList[0].type + "] = {");
+      + parsedMetaList[collectionKeyIndex].type + "] = {");
     writer.write(newline);
 
     for (var j = 0; j < recordList.size(); j++) {
@@ -60,7 +58,7 @@ if (isCollectionArray) {
             element = Util.quote(element);
         }
 
-        writer.write("  " + record.get(0) + ": " + element);
+        writer.write("  " + record.get(collectionKeyIndex) + ": " + element);
 
         if (j < recordList.size() - 1) {
           writer.write(",");
