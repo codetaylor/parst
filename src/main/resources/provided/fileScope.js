@@ -8,6 +8,16 @@ for each(var meta in metaList) {
     parsedMetaList.push(JSON.parse(meta));
 }
 
+var defaultNullReplacementsByType = {
+    bool: false,
+    byte: 0,
+    short: 0,
+    int: 0,
+    long: 0,
+    float: 0,
+    double: 0
+};
+
 var Util = {};
 
 Util.writeCommentSeparator = function(writer, text) {
@@ -42,7 +52,7 @@ Util.getCollectionKeyIndex = function(columnIndex) {
         return -1;
     }
 
-    if ("key" in parsedMetaList[columnIndex]) {
+    if ('key' in parsedMetaList[columnIndex]) {
         var key = parsedMetaList[columnIndex].key;
 
         for (var i = 0; i < parsedMetaList.length; i++) {
@@ -91,7 +101,7 @@ Util.getCollectionName = function(columnIndex) {
         if (nameList.get(columnIndex)) {
 
             if (collectionName) {
-                collectionName = collectionName + "_" + nameList.get(columnIndex).toUpperCase();
+                collectionName = collectionName + '_' + nameList.get(columnIndex).toUpperCase();
 
             } else {
                 collectionName = nameList.get(columnIndex).toUpperCase();
@@ -104,4 +114,28 @@ Util.getCollectionName = function(columnIndex) {
 
         return collectionName;
     }
+};
+
+Util.getCollectionNullReplacement = function(columnIndex) {
+
+    if ('null' in parsedMetaList[columnIndex]) {
+        return parsedMetaList[columnIndex].replaceNull;
+    }
+
+    var type = this.getCollectionType(columnIndex);
+
+    if (type in defaultNullReplacementsByType) {
+        return defaultNullReplacementsByType[type];
+    }
+
+    return 'null';
+};
+
+Util.replaceIfNull = function(toReplace, columnIndex) {
+
+    if ('null' == toReplace) {
+        return this.getCollectionNullReplacement(columnIndex);
+    }
+
+    return toReplace;
 };

@@ -23,9 +23,9 @@ if (isCollectionArray) {
 
     for (var j = 0; j < recordList.size(); j++) {
         var record = recordList.get(j);
-        var element = record.get(columnIndex);
+        var element = Util.replaceIfNull(record.get(columnIndex), columnIndex);
 
-        if (requiresQuotes) {
+        if (requiresQuotes && element != 'null') {
             element = Util.quote(element);
         }
 
@@ -52,9 +52,9 @@ if (isCollectionArray) {
     for (var j = 0; j < recordList.size(); j++) {
 
         var record = recordList.get(j);
-        var element = record.get(columnIndex);
+        var element = Util.replaceIfNull(record.get(columnIndex), columnIndex);
 
-        if (requiresQuotes) {
+        if (requiresQuotes && element != 'null') {
             element = Util.quote(element);
         }
 
