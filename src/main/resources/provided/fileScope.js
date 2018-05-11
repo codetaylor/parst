@@ -43,11 +43,28 @@ Util.getCollectionKeyIndex = function(columnIndex) {
     }
 
     if ("key" in parsedMetaList[columnIndex]) {
-        return parsedMetaList[columnIndex].key;
+        var key = parsedMetaList[columnIndex].key;
+
+        for (var i = 0; i < parsedMetaList.length; i++) {
+            if (this.isCollectionKey(i) && this.getCollectionKeyId(i) == key) {
+                return i;
+            }
+        }
     }
 
     return 0;
 };
+
+Util.getCollectionKeyId = function(columnIndex) {
+    if (this.isCollectionKey(columnIndex)) {
+        var entry = parsedMetaList[columnIndex].collection.split(':');
+
+        if (entry && entry.length > 1) {
+            return entry[1];
+        }
+    }
+    return null;
+}
 
 Util.getCollectionType = function(columnIndex) {
     return parsedMetaList[columnIndex].type;
