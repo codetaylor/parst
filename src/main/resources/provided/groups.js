@@ -3,23 +3,26 @@
 var groups = {};
 var columnIndex = 0;
 
-for each(var meta in parsedMetaList) {
+for each(var collection in collectionList) {
+    var meta = collection.meta;
 
     if (meta.group) {
         var group = meta.group.split('.');
-        var groupType = Util.getCollectionType(columnIndex);
+        var groupType = collection.getType();
+        var groupKeyType = collection.getKeyType();
         var groupName = group[0].toUpperCase();
         var elementId = group[1];
 
         if (!groups[groupName]) {
             groups[groupName] = {
                 type: groupType,
-                isArray: Util.isCollectionArray(columnIndex),
+                keyType: groupKeyType,
+                isArray: collection.isArray(),
                 elements: {}
             };
         }
 
-        if (groups[groupName].isArray != Util.isCollectionArray(columnIndex)) {
+        if (groups[groupName].isArray != collection.isArray()) {
             throw new Exception("Can't group array collections with non-array collections");
         }
 
@@ -27,7 +30,11 @@ for each(var meta in parsedMetaList) {
             throw new Exception("Mismatched group types: " + groups[groupName].type + " != " + groupType);
         }
 
-        groups[groupName].elements[group[1]] = Util.getCollectionName(columnIndex);
+        if (groups[groupName].keyType != groupKeyType) {
+            throw new Exception("Mismatched group key types: " + groups[groupName].keyType + " != " + groupKeyType);
+        }
+
+        groups[groupName].elements[group[1]] = collection.getDisplayName();
     }
 
     columnIndex += 1;
@@ -36,15 +43,15 @@ for each(var meta in parsedMetaList) {
 for (var name in groups) {
     var group = groups[name];
 
+    writer.write(newline);
+    Util.writeCommentSeparator(writer, "Group: " + name);
+    writer.write(newline);
+
     if (group.isArray) {
+        // TODO
 
     } else {
-        var keyType = Util.getCollectionType(0);
-
-        writer.write(newline);
-        Util.writeCommentSeparator(writer, "Group: " + name);
-        writer.write(newline);
-        writer.write("global " + name + " as " + group.type + "[" + keyType + "][string] = {" + newline);
+        writer.write("global " + name + " as " + group.type + "[" + group.keyType + "][string] = {" + newline);
 
         var elementIndex = 0;
         var lastIndex = Object.keys(group.elements).length - 1;

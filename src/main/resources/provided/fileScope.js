@@ -1,22 +1,131 @@
 var Exception = Java.type("java.lang.Exception");
 var System = Java.type("java.lang.System");
 var newline = System.lineSeparator();
+var rowCount = recordList.length;
 
-var parsedMetaList = [];
+var collectionList = [];
 
-for each(var meta in metaList) {
-    parsedMetaList.push(JSON.parse(meta));
+var quoteByType = [
+    'string'
+];
+
+// ----------------------------------------------------------------------------
+// - Collection
+// ----------------------------------------------------------------------------
+
+var Collection = function(index, name, meta) {
+    this.index = index;
+    this.name = name;
+    this.meta = meta;
+};
+
+Collection.prototype.getRecordEntry = function(row) {
+    var value = recordList[row].get(this.index);
+    if (value == 'null') {
+        value = this.getNullReplacement();
+        if (value != 'null' && Util.contains(quoteByType, this.getType())) {
+            return "\"" + value + "\"";
+        }
+        return value;
+    }
+    if (Util.contains(quoteByType, this.getType())) {
+        return "\"" + value + "\"";
+    }
+    return value;
+};
+
+Collection.prototype.getType = function() {
+    return this.meta.type;
+};
+
+Collection.prototype.getCollectionType = function() {
+    return this.meta.collection;
+};
+
+Collection.prototype.isKey = function() {
+    return this.getCollectionType() == 'key';
+};
+
+Collection.prototype.isArray = function() {
+    return this.getCollectionType() == 'array';
+};
+
+Collection.prototype.isMap = function() {
+    return !this.isKey() && !this.isArray();
+};
+
+Collection.prototype.getKeyIndex = function() {
+    if (this.isArray()) {
+        return -1;
+    }
+    if ('key' in this.meta) {
+        for (var i = 0; i < collectionList.length; i++) {
+            var collection = collectionList[i];
+            if (collection.isKey() && collection.getCollectionKeyId() == this.meta.key) {
+                return i;
+            }
+        }
+    }
+    return 0;
+};
+
+Collection.prototype.getKeyType = function() {
+    return !this.isArray() ? collectionList[this.getKeyIndex()].getType() : null;
+};
+
+Collection.prototype.getCollectionKeyId = function() {
+    if (this.isKey()) {
+        var entry = this.meta.collection.split(':');
+        if (entry && entry.length > 1) {
+            return entry[1];
+        }
+    }
+    return null;
+};
+
+Collection.prototype.getDisplayName = function() {
+    var collectionName;
+    if (this.isArray()) {
+        if (this.name) {
+            collectionName = this.name.toUpperCase();
+        }
+    } else {
+        if (collectionList[0].name) {
+            collectionName = collectionList[0].name.toUpperCase();
+        }
+        if (this.name) {
+            if (collectionName) {
+                collectionName = collectionName + '_' + this.name.toUpperCase();
+            } else {
+                collectionName = this.name.toUpperCase();
+            }
+        }
+    }
+    if (!collectionName) {
+        throw new Exception('Missing name for column: ' + this.index);
+    }
+    return collectionName;
+};
+
+Collection.prototype.hasNullReplacement = function() {
+    return 'nullValue' in this.meta;
+};
+
+Collection.prototype.getNullReplacement = function() {
+    return (this.hasNullReplacement()) ? this.meta.nullValue : 'null';
+};
+
+Collection.prototype.allowNulls = function() {
+    return 'allowNulls' in this.meta && this.meta.allowNulls;
+};
+
+// ----------------------------------------------------------------------------
+
+for (var i = 0; i < nameList.length; i++) {
+    collectionList.push(new Collection(i, nameList[i], JSON.parse(metaList[i])));
 }
 
-var defaultNullReplacementsByType = {
-    bool: false,
-    byte: 0,
-    short: 0,
-    int: 0,
-    long: 0,
-    float: 0,
-    double: 0
-};
+// ----------------------------------------------------------------------------
 
 var Util = {};
 
@@ -26,116 +135,6 @@ Util.writeCommentSeparator = function(writer, text) {
     writer.write("// -----------------------------------------------------------------------------" + newline);
 };
 
-Util.quote = function(text) {
-    return "\"" + text + "\"";
-};
-
 Util.contains = function(arr, element) {
     return arr.indexOf(element) > -1;
-};
-
-Util.isCollectionKey = function(columnIndex) {
-    return parsedMetaList[columnIndex].collection && parsedMetaList[columnIndex].collection == 'key';
-};
-
-Util.isCollectionArray = function(columnIndex) {
-    return parsedMetaList[columnIndex].collection && parsedMetaList[columnIndex].collection == 'array';
-};
-
-Util.isCollectionMap = function(columnIndex) {
-    return !this.isCollectionKey(columnIndex) && !this.isCollectionArray(columnIndex);
-};
-
-Util.getCollectionKeyIndex = function(columnIndex) {
-
-    if (this.isCollectionArray(columnIndex)) {
-        return -1;
-    }
-
-    if ('key' in parsedMetaList[columnIndex]) {
-        var key = parsedMetaList[columnIndex].key;
-
-        for (var i = 0; i < parsedMetaList.length; i++) {
-            if (this.isCollectionKey(i) && this.getCollectionKeyId(i) == key) {
-                return i;
-            }
-        }
-    }
-
-    return 0;
-};
-
-Util.getCollectionKeyId = function(columnIndex) {
-    if (this.isCollectionKey(columnIndex)) {
-        var entry = parsedMetaList[columnIndex].collection.split(':');
-
-        if (entry && entry.length > 1) {
-            return entry[1];
-        }
-    }
-    return null;
-}
-
-Util.getCollectionType = function(columnIndex) {
-    return parsedMetaList[columnIndex].type;
-};
-
-Util.getCollectionName = function(columnIndex) {
-
-    if (this.isCollectionArray(columnIndex)) {
-
-        if (nameList.get(columnIndex)) {
-            return nameList.get(columnIndex).toUpperCase();
-        }
-
-        throw new Exception("Missing name for column: " + columnIndex);
-
-    } else if (columnIndex > 0) {
-
-        var collectionName;
-
-        if (nameList.get(0)) {
-            collectionName = nameList.get(0).toUpperCase();
-        }
-
-        if (nameList.get(columnIndex)) {
-
-            if (collectionName) {
-                collectionName = collectionName + '_' + nameList.get(columnIndex).toUpperCase();
-
-            } else {
-                collectionName = nameList.get(columnIndex).toUpperCase();
-            }
-        }
-
-        if (!collectionName) {
-            throw new Exception("Missing name for column: " + columnIndex);
-        }
-
-        return collectionName;
-    }
-};
-
-Util.getCollectionNullReplacement = function(columnIndex) {
-
-    if ('null' in parsedMetaList[columnIndex]) {
-        return parsedMetaList[columnIndex].replaceNull;
-    }
-
-    var type = this.getCollectionType(columnIndex);
-
-    if (type in defaultNullReplacementsByType) {
-        return defaultNullReplacementsByType[type];
-    }
-
-    return 'null';
-};
-
-Util.replaceIfNull = function(toReplace, columnIndex) {
-
-    if ('null' == toReplace) {
-        return this.getCollectionNullReplacement(columnIndex);
-    }
-
-    return toReplace;
 };

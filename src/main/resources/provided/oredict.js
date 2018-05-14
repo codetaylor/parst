@@ -2,19 +2,19 @@
 
 (function() {
 
-if (!parsedMeta.ore) {
+if (!collection.meta.ore) {
     return;
 }
 
-var oreDictEntry = "<ore:" + parsedMeta.ore + ">";
+var oreDictEntry = "<ore:" + collection.meta.ore + ">";
 
 writer.write(newline);
 
-if (parsedMeta.collection && parsedMeta.collection == 'array') {
-    writer.write("for item in " + collectionName + " {" + newline);
+if (collection.isArray()) {
+    writer.write("for item in " + collection.getDisplayName() + " {" + newline);
 
 } else {
-    writer.write("for name, item in " + collectionName + " {" + newline);
+    writer.write("for name, item in " + collection.getDisplayName() + " {" + newline);
 }
 
 writer.write("  if (item as bool & !(" + oreDictEntry + " has item)) {" + newline);

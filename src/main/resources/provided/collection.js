@@ -2,70 +2,57 @@
 
 (function() {
 
-if (!parsedMeta.type || isCollectionKey) {
+if (!collection.getType() || collection.isKey()) {
     return;
 }
 
-var typesToQuote = [
-    "string"
-];
-
-var requiresQuotes = Util.contains(typesToQuote, parsedMeta.type);
-
 writer.write(newline);
 
-if (isCollectionArray) {
+if (collection.isArray()) {
 
     writer.write("global "
-      + collectionName + " as "
-      + parsedMeta.type + "[] = [");
+      + collection.getDisplayName() + " as "
+      + collection.getType() + "[] = [");
     writer.write(newline);
 
-    for (var j = 0; j < recordList.size(); j++) {
-        var record = recordList.get(j);
-        var element = Util.replaceIfNull(record.get(columnIndex), columnIndex);
+    for (var row = 0; row < rowCount; row++) {
+        var entry = collection.getRecordEntry(row);
 
-        if (requiresQuotes && element != 'null') {
-            element = Util.quote(element);
+        if (entry == 'null' && !collection.allowNulls()) {
+            continue;
         }
 
-        writer.write("  " + element);
-
-        if (j < recordList.size() - 1) {
+        writer.write("  " + entry);
+        if (row < rowCount - 1) {
           writer.write(",");
         }
         writer.write(newline);
     }
-
     writer.write("];" + newline);
 
 } else {
 
-    var collectionKeyIndex = Util.getCollectionKeyIndex(columnIndex);
+    var keyCollection = collectionList[collection.getKeyIndex()];
 
     writer.write("global "
-      + collectionName + " as "
-      + parsedMeta.type + "["
-      + parsedMetaList[collectionKeyIndex].type + "] = {");
+      + collection.getDisplayName() + " as "
+      + collection.getType() + "["
+      + collection.getKeyType() + "] = {");
     writer.write(newline);
 
-    for (var j = 0; j < recordList.size(); j++) {
+    for (var row = 0; row < rowCount; row++) {
+        var entry = collection.getRecordEntry(row);
 
-        var record = recordList.get(j);
-        var element = Util.replaceIfNull(record.get(columnIndex), columnIndex);
-
-        if (requiresQuotes && element != 'null') {
-            element = Util.quote(element);
+        if (entry == 'null' && !collection.allowNulls()) {
+            continue;
         }
 
-        writer.write("  " + record.get(collectionKeyIndex) + ": " + element);
-
-        if (j < recordList.size() - 1) {
+        writer.write("  " + keyCollection.getRecordEntry(row) + ": " + entry);
+        if (row < rowCount - 1) {
           writer.write(",");
         }
         writer.write(newline);
     }
-
     writer.write("};" + newline);
 }
 

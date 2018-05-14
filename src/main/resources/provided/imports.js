@@ -25,11 +25,9 @@ var ignore = [
 
 var importSet = new HashSet();
 
-for each(var meta in metaList) {
-    var m = JSON.parse(meta);
-
-    if (m.type) {
-        importSet.add(m.type);
+for each(var collection in collectionList) {
+    if (collection.getType()) {
+        importSet.add(collection.getType());
     }
 }
 

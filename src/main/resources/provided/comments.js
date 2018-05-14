@@ -2,15 +2,11 @@
 
 (function() {
 
-if (!parsedMeta.type) {
-    return;
-}
-
-if (!isCollectionArray && columnIndex == 0) {
+if (!collection.getType() || collection.isKey()) {
     return;
 }
 
 writer.write(newline);
-Util.writeCommentSeparator(writer, collectionName);
+Util.writeCommentSeparator(writer, collection.getDisplayName());
 
 }());
